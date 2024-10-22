@@ -15,60 +15,22 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(async (config) => {
   const { value: token } = getStorage('TOKEN') || {}
-  if (token) {
+  if (token && config.headers) {
     config.headers.Authorization = token
   }
   return config
 })
 
 axiosInstance.interceptors.response.use(
+  // @ts-expect-error 直接返回了 data 数据
   async (response) => {
-    const data = response.data
-    // const originalRequest = response.config
-
-    // const showError = response.config.showError
-
-    // if (data && data.code === 401) {
-    //   if (!originalRequest._retry) {
-    //     originalRequest._retry = true
-    //     try {
-    //       const { login } = useUserInfo()
-    //       await login()
-
-    //       const token = getStorage('TOKEN')?.value
-
-    //       if (token) {
-    //         originalRequest.headers['X-Access-Token'] = `Bearer ${token}`
-    //       }
-    //       // 更新原始请求的 token 并重试
-    //       return axiosInstance(originalRequest)
-    //     }
-    //     catch (refreshError) {
-    //       return Promise.reject(refreshError)
-    //     }
-    //   }
-    //   else {
-    //     Taro.redirectTo({
-    //       url: '/pages/index/index',
-    //     })
-    //     if (showError) {
-    //       Taro.showToast({
-    //         title: data?.message || '登录过期，请重新登录',
-    //         icon: 'none',
-    //       })
-    //     }
-    //   }
-
-    //   return data
-    // }
+    const data = response.data as ResponseData | undefined
 
     if (data?.code !== 200) {
-      // if (showError) {
       uni.showToast({
         title: data?.msg || '未知错误，请稍后重试',
         icon: 'none',
       })
-      // }
     }
 
     return data
@@ -77,6 +39,7 @@ axiosInstance.interceptors.response.use(
     // 处理响应错误
     console.error('响应错误:', error)
     uni.showToast({
+      // @ts-expect-error 忽略此类型错误
       title: error.response?.data?.message || '未知错误，请稍后重试',
       icon: 'error',
     })
